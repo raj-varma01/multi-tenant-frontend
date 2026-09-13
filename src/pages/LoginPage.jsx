@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { api } from "../api/client.js";
 import { useAuthStore } from "../store/authStore.js";
 
 export function LoginPage() {
     const [mode, setMode] = useState("login");
     const navigate = useNavigate();
     const location = useLocation();
+    const setSession = useAuthStore((s) => s.setSession);
+    const setTenantId = useAuthStore((s) => s.setTenantId);
     const storedTenantId = useAuthStore((s) => s.tenantId);
 
     const [form, setForm] = useState({
@@ -23,15 +26,31 @@ export function LoginPage() {
     }
 
     async function handleSubmit(e) {
-        console.log('form data', form)
         e.preventDefault();
         setError("");
         setLoading(true);
         try {
             if (mode === "register") {
-                // will implement register api call here
+                const res = await api.post("/auth/register", {
+                    tenantName: form.tenantName,
+                    name: form.name,
+                    email: form.email,
+                    password: form.password,
+                });
+                setTenantId(res.data.data.tenant.id);
+                setSession({
+                    accessToken: res.data.data.accessToken,
+                    user: res.data.data.user,
+                    tenant: res.data.data.tenant,
+                });
             } else {
-                // call login api
+                setTenantId(form.tenantId);
+                const res = await api.post(
+                    "/auth/login",
+                    { email: form.email, password: form.password },
+                    { headers: { "X-Tenant-ID": form.tenantId } }
+                );
+                setSession({ accessToken: res.data.data.accessToken, user: res.data.data.user });
             }
             const redirectTo = location.state?.from?.pathname || "/";
             navigate(redirectTo, { replace: true });
