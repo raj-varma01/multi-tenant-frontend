@@ -10,6 +10,7 @@ import { UserManagementPage } from "./pages/UserManagementPage.jsx";
 import { SettingsPage } from "./pages/SettingsPage.jsx";
 import { ForbiddenPage } from "./pages/ForbiddenPage.jsx";
 import { NotFoundPage } from "./pages/NotFoundPage.jsx";
+import { FileManagerPage } from "./pages/FileManagerPage.jsx";
 
 
 function App() {
