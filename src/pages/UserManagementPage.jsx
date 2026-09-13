@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { api } from "../api/client.js";
+import { RoleGate } from "../components/RoleGate.jsx";
 import { useAuthStore } from "../store/authStore.js";
 
 const ROLES = ["owner", "admin", "editor", "viewer"];
@@ -13,6 +15,48 @@ export function UserManagementPage() {
     const [inviteRole, setInviteRole] = useState("viewer");
     const [inviteResult, setInviteResult] = useState(null);
     const [inviteError, setInviteError] = useState("");
+
+    async function loadUsers() {
+        setLoading(true);
+        try {
+            const res = await api.get("/users", { params: { page: 1, limit: 100 } });
+            console.log('res ===>>', res);
+            setUsers(res.data.data);
+        } catch (err) {
+            setError(err.response?.data?.message || "Could not load users");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    async function handleInvite(e) {
+        e.preventDefault();
+        setInviteError("");
+        setInviteResult(null);
+        try {
+            const res = await api.post("/users/invite", { email: inviteEmail, role: inviteRole });
+            console.log('handleInvite res ===>>', res);
+            setInviteResult(res.data.data);
+            setInviteEmail("");
+        } catch (err) {
+            setInviteError(err.response?.data?.message || "Could not send invite");
+        }
+    }
+
+    async function handleRoleChange(user, role) {
+        const previous = users;
+        setUsers((prev) => prev.map((u) => (u._id === user._id ? { ...u, role } : u)));
+        try {
+            await api.patch(`/users/${user._id}/role`, { role });
+        } catch (err) {
+            setUsers(previous); // revert on failure
+            alert(err.response?.data?.message || "Could not update role");
+        }
+    }
 
     return (
         <>
