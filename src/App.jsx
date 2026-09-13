@@ -46,6 +46,7 @@ function App() {
           }
         >
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/files" element={<FileManagerPage />} />
           <Route
             path="/users"
             element={
