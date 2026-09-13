@@ -1,9 +1,24 @@
 import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { api } from "../api/client.js";
+import { MetricCard } from "../components/MetricCard.jsx";
+function formatBytes(bytes) {
+    if (!bytes) return "0 B";
+    const units = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
 
 export function DashboardPage() {
     const [summary, setSummary] = useState(null);
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        api
+            .get("/reports/summary")
+            .then((res) => setSummary(res.data.data))
+            .catch((err) => setError(err.response?.data?.message || "Could not load dashboard metrics"));
+    }, []);
 
     return (
         <>
@@ -22,6 +37,13 @@ export function DashboardPage() {
 
             {summary && (
                 <>
+                    <div className="metric-grid">
+                        <MetricCard label="Total files" value={summary.totalFiles} />
+                        <MetricCard label="Storage used" value={formatBytes(summary.totalStorageBytes)} />
+                        <MetricCard label="Active users" value={summary.activeUsers} />
+                        <MetricCard label="Jobs queued" value={summary.jobsQueued} />
+                    </div>
+
                     <div className="panel" style={{ marginBottom: 24 }}>
                         <div className="panel-header">
                             <span className="panel-title">Uploads, last 30 days</span>
